@@ -1,6 +1,9 @@
 package sqltypes
 
-import "database/sql/driver"
+import (
+	"database/sql"
+	"database/sql/driver"
+)
 
 type NullInt0 int
 
@@ -10,8 +13,14 @@ func (n *NullInt0) Scan(value interface{}) error {
 		*n = 0
 		return nil
 	}
-	vv, _ := value.(int64)
-	*n = NullInt0(int(vv))
+
+	ni64 := sql.NullInt64{}
+	err := ni64.Scan(value)
+	if err != nil {
+		return err
+	}
+
+	*n = NullInt0(int(ni64.Int64))
 	return nil
 }
 
@@ -31,8 +40,13 @@ func (n *NullString) Scan(value interface{}) error {
 		*n = ""
 		return nil
 	}
-	vv, _ := value.(string)
-	*n = NullString(vv)
+	vv, ok := value.(string)
+	if ok {
+		*n = NullString(vv)
+	} else {
+		vv2, _ := value.([]byte)
+		*n = NullString(string(vv2))
+	}
 	return nil
 }
 
