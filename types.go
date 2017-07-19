@@ -22,3 +22,24 @@ func (n NullInt0) Value() (driver.Value, error) {
 	}
 	return int(n), nil
 }
+
+type NullString string
+
+// Scan implements the Scanner interface.
+func (n *NullString) Scan(value interface{}) error {
+	if value == nil {
+		*n = ""
+		return nil
+	}
+	vv, _ := value.(string)
+	*n = NullString(vv)
+	return nil
+}
+
+// Value implements the driver Valuer interface.
+func (n NullString) Value() (driver.Value, error) {
+	if n == "" {
+		return nil, nil
+	}
+	return string(n), nil
+}
