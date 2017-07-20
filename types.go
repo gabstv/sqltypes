@@ -29,7 +29,7 @@ func (n NullInt0) Value() (driver.Value, error) {
 	if n == 0 {
 		return nil, nil
 	}
-	return int(n), nil
+	return int64(n), nil
 }
 
 type NullString string
