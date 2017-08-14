@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"strconv"
+	"time"
 )
 
 type NullInt0 int
@@ -85,4 +86,66 @@ func (n *NullString) UnmarshalJSON(v []byte) error {
 	}
 	*n = NullString(vv)
 	return nil
+}
+
+type NullTime time.Time
+
+func (t NullTime) T() time.Time {
+	return time.Time(t)
+}
+
+func (t *NullTime) Scan(value interface{}) error {
+	if value == nil {
+		return nil
+	}
+	if v, ok := value.(time.Time); ok {
+		*t = NullTime(v)
+		return nil
+	}
+	var e9 error
+	var t9 time.Time
+	switch v := value.(type) {
+	case []byte:
+		t9, e9 = time.Parse("2006-01-02 15:04:05", string(v))
+	case string:
+		t9, e9 = time.Parse("2006-01-02 15:04:05", v)
+	}
+	if e9 == nil {
+		*t = NullTime(t9)
+	}
+	return e9
+}
+
+func (t NullTime) Value() (driver.Value, error) {
+	v := t.T()
+	if v.IsZero() {
+		return nil, nil
+	}
+	return v, nil
+}
+
+// implements json.Unmarshaler
+func (n *NullTime) UnmarshalJSON(v []byte) error {
+	if v == nil {
+		return nil
+	}
+	if len(v) == 0 {
+		return nil
+	}
+	if string(v) == "null" {
+		return nil
+	}
+	t2 := &time.Time{}
+	err := t2.UnmarshalJSON(v)
+	if err != nil {
+		return err
+	}
+	*n = NullTime(*t2)
+	return nil
+}
+
+// implements json.Marshaler
+func (n *NullTime) MarshalJSON() ([]byte, error) {
+	t := n.T()
+	return t.MarshalJSON()
 }
