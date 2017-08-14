@@ -3,6 +3,7 @@ package sqltypes
 import (
 	"database/sql"
 	"database/sql/driver"
+	"strconv"
 )
 
 type NullInt0 int
@@ -56,4 +57,32 @@ func (n NullString) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return string(n), nil
+}
+
+// implements json.Unmarshaler
+func (n *NullString) UnmarshalJSON(v []byte) error {
+	if v == nil {
+		return nil
+	}
+	if len(v) == 0 {
+		return nil
+	}
+	if string(v) == "null" {
+		return nil
+	}
+	if len(v) == 1 {
+		*n = NullString(string(v))
+		return nil
+	}
+	vv := string(v)
+	if vv[0] == '"' && vv[len(vv)-1] == '"' {
+		unq, err := strconv.Unquote(vv)
+		if err != nil {
+			return err
+		}
+		*n = NullString(unq)
+		return nil
+	}
+	*n = NullString(vv)
+	return nil
 }
