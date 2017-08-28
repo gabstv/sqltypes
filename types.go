@@ -88,6 +88,10 @@ func (n *NullString) UnmarshalJSON(v []byte) error {
 	return nil
 }
 
+func (n NullString) String() string {
+	return string(n)
+}
+
 type NullTime time.Time
 
 func (t NullTime) T() time.Time {
