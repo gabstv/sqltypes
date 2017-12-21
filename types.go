@@ -5,6 +5,8 @@ import (
 	"database/sql/driver"
 	"strconv"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 type NullInt0 int
@@ -151,5 +153,61 @@ func (n *NullTime) UnmarshalJSON(v []byte) error {
 // implements json.Marshaler
 func (n *NullTime) MarshalJSON() ([]byte, error) {
 	t := n.T()
+	return t.MarshalJSON()
+}
+
+type NullDecimal decimal.Decimal
+
+func (d NullDecimal) D() decimal.Decimal {
+	return decimal.Decimal(d)
+}
+
+func (d *NullDecimal) Scan(value interface{}) error {
+	if value == nil {
+		return nil
+	}
+	if v, ok := value.(decimal.Decimal); ok {
+		*d = NullDecimal(v)
+		return nil
+	}
+	ddd := decimal.New(0, 0)
+	dd := &ddd
+	err := dd.Scan(value)
+	if err != nil {
+		return err
+	}
+	*d = NullDecimal(*dd)
+	return nil
+}
+
+func (d NullDecimal) Value() (driver.Value, error) {
+	v := d.D()
+	return v.Value()
+}
+
+// implements json.Unmarshaler
+func (n *NullDecimal) UnmarshalJSON(v []byte) error {
+	if v == nil {
+		return nil
+	}
+	if len(v) == 0 {
+		return nil
+	}
+	if string(v) == "null" {
+		return nil
+	}
+	ddd := decimal.New(0, 0)
+	t2 := &ddd
+	err := t2.UnmarshalJSON(v)
+	if err != nil {
+		return err
+	}
+	*n = NullDecimal(*t2)
+	return nil
+}
+
+// implements json.Marshaler
+func (n *NullDecimal) MarshalJSON() ([]byte, error) {
+	t := n.D()
 	return t.MarshalJSON()
 }
