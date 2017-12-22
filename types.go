@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/shopspring/decimal"
@@ -210,4 +211,17 @@ func (n *NullDecimal) UnmarshalJSON(v []byte) error {
 func (n *NullDecimal) MarshalJSON() ([]byte, error) {
 	t := n.D()
 	return t.MarshalJSON()
+}
+
+func DecimalFromString(s string) decimal.Decimal {
+	dotI := strings.LastIndex(s, ".")
+	comI := strings.LastIndex(s, ",")
+	if dotI >= 0 && dotI > comI {
+		s = strings.Replace(s, ",", "", -1)
+	} else if comI >= 0 && comI > dotI {
+		s = strings.Replace(s, ".", "", -1)
+		s = strings.Replace(s, ",", ".", -1)
+	}
+	d, _ := decimal.NewFromString(s)
+	return d
 }

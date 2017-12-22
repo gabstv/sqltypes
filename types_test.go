@@ -15,3 +15,8 @@ func TestUnmarshal(t *testing.T) {
 	assert.Equal(t, NullString("with quotes"), m["b"])
 	assert.Equal(t, NullString("100"), m["c"])
 }
+
+func TestDecimal(t *testing.T) {
+	assert.Equal(t, DecimalFromString("10.01"), DecimalFromString("10,01"))
+	assert.Equal(t, DecimalFromString("123,010.01"), DecimalFromString("123.010,01"))
+}
