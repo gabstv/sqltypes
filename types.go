@@ -37,6 +37,32 @@ func (n NullInt0) Value() (driver.Value, error) {
 	return int64(n), nil
 }
 
+type NullUint64 uint64
+
+// Scan implements the Scanner interface.
+func (n *NullUint64) Scan(value interface{}) error {
+	if value == nil {
+		*n = 0
+		return nil
+	}
+
+	vv := uint64(0)
+	err := convertAssign(&vv, value)
+	if err != nil {
+		return err
+	}
+	*n = NullUint64(vv)
+	return nil
+}
+
+// Value implements the driver Valuer interface.
+func (n NullUint64) Value() (driver.Value, error) {
+	if n == 0 {
+		return nil, nil
+	}
+	return uint64(n), nil
+}
+
 type NullString string
 
 // Scan implements the Scanner interface.
