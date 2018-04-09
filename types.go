@@ -10,6 +10,33 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+type NullBool bool
+
+// Scan implements the Scanner interface.
+func (n *NullBool) Scan(value interface{}) error {
+	if value == nil {
+		*n = false
+		return nil
+	}
+
+	ni64 := sql.NullInt64{}
+	err := ni64.Scan(value)
+	if err != nil {
+		return err
+	}
+
+	*n = NullBool(ni64.Int64 != 0)
+	return nil
+}
+
+// Value implements the driver Valuer interface.
+func (n NullBool) Value() (driver.Value, error) {
+	if n == false {
+		return 0, nil
+	}
+	return 1, nil
+}
+
 type NullInt0 int
 
 // Scan implements the Scanner interface.
