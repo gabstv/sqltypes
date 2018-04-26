@@ -37,6 +37,7 @@ func (n NullBool) Value() (driver.Value, error) {
 	return 1, nil
 }
 
+// NullInt0 is a normal int (0 = nil)
 type NullInt0 int
 
 // Scan implements the Scanner interface.
@@ -116,7 +117,7 @@ func (n NullString) Value() (driver.Value, error) {
 	return string(n), nil
 }
 
-// implements json.Unmarshaler
+// UnmarshalJSON implements json.Unmarshaler
 func (n *NullString) UnmarshalJSON(v []byte) error {
 	if v == nil {
 		return nil
