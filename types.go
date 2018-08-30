@@ -279,3 +279,31 @@ func DecimalFromString(s string) decimal.Decimal {
 	d, _ := decimal.NewFromString(s)
 	return d
 }
+
+// NullFloat64 is a float64 with the 0 value being nil (on sending to sql)
+type NullFloat64 float64
+
+// Scan implements the Scanner interface.
+func (n *NullFloat64) Scan(value interface{}) error {
+	if value == nil {
+		*n = 0
+		return nil
+	}
+
+	nf64 := sql.NullFloat64{}
+	err := nf64.Scan(value)
+	if err != nil {
+		return err
+	}
+
+	*n = NullFloat64(nf64.Float64)
+	return nil
+}
+
+// Value implements the driver Valuer interface.
+func (n NullFloat64) Value() (driver.Value, error) {
+	if n == 0 {
+		return nil, nil
+	}
+	return float64(n), nil
+}
