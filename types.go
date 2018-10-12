@@ -65,6 +65,39 @@ func (n NullInt0) Value() (driver.Value, error) {
 	return int64(n), nil
 }
 
+// NullIntM1 is a normal int (-1 = nil)
+type NullIntM1 int
+
+// Scan implements the Scanner interface.
+func (n *NullIntM1) Scan(value interface{}) error {
+	if value == nil {
+		*n = -1
+		return nil
+	}
+
+	ni64 := sql.NullInt64{}
+	err := ni64.Scan(value)
+	if err != nil {
+		return err
+	}
+
+	*n = NullIntM1(int(ni64.Int64))
+	return nil
+}
+
+// Value implements the driver Valuer interface.
+func (n NullIntM1) Value() (driver.Value, error) {
+	if n == -1 {
+		return nil, nil
+	}
+	return int64(n), nil
+}
+
+// IsNull = (v == -1)
+func (n NullIntM1) IsNull() bool {
+	return n == -1
+}
+
 type NullUint64 uint64
 
 // Scan implements the Scanner interface.
