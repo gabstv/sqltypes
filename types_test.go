@@ -3,6 +3,7 @@ package sqltypes
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -19,4 +20,32 @@ func TestUnmarshal(t *testing.T) {
 func TestDecimal(t *testing.T) {
 	assert.Equal(t, DecimalFromString("10.01"), DecimalFromString("10,01"))
 	assert.Equal(t, DecimalFromString("123,010.01"), DecimalFromString("123.010,01"))
+}
+
+func TestNullDate(t *testing.T) {
+	dd := NullDate([3]int{2018, 3, 9})
+	assert.Equal(t, 2018, dd.Year())
+	//
+	ymdstr, err := dd.Value()
+	assert.NoError(t, err)
+	assert.Equal(t, ymdstr.(string), "2018-03-09")
+	//
+	str2 := struct {
+		Date NullDate `json:"date"`
+	}{}
+	assert.NoError(t, json.Unmarshal([]byte("{\"date\":\"2019-07-22\"}"), &str2))
+	assert.Equal(t, 22, str2.Date.Day())
+	assert.Equal(t, 2019, str2.Date.Year())
+	//
+	// testing scan
+	dd2 := &dd
+	assert.NoError(t, dd2.Scan(time.Date(2010, time.Month(1), 10, 0, 0, 0, 0, time.Local)))
+	assert.Equal(t, dd2.Year(), 2010)
+	assert.Equal(t, dd2.Month(), time.Month(1))
+	assert.Equal(t, dd2.Day(), 10)
+	//
+	assert.NoError(t, dd2.Scan("2013-09-25"))
+	assert.Equal(t, dd2.Year(), 2013)
+	assert.Equal(t, dd2.Month(), time.Month(9))
+	assert.Equal(t, dd2.Day(), 25)
 }

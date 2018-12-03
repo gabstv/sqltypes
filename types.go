@@ -3,6 +3,7 @@ package sqltypes
 import (
 	"database/sql"
 	"database/sql/driver"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -339,4 +340,104 @@ func (n NullFloat64) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return float64(n), nil
+}
+
+//
+//
+
+type NullDate [3]int
+
+func (d NullDate) T() time.Time {
+	return time.Date(d[0], time.Month(d[1]), d[2], 0, 0, 0, 0, time.UTC)
+}
+
+func (d NullDate) IsZero() bool {
+	return d[0] == 0 || d[1] == 0 || d[2] == 0
+}
+
+func (d *NullDate) Scan(value interface{}) error {
+	if value == nil {
+		return nil
+	}
+	if v, ok := value.(time.Time); ok {
+		// v = v.UTC()
+		*d = NullDate([3]int{v.Year(), int(v.Month()), v.Day()})
+		return nil
+	}
+	switch v := value.(type) {
+	case []byte:
+		return d.strscan(string(v))
+	case string:
+		return d.strscan(v)
+	}
+	*d = NullDate([3]int{0, 0, 0})
+	return nil
+}
+
+func (d *NullDate) strscan(v string) error {
+	ymd := strings.Split(string(v), "-")
+	if len(ymd) != 3 {
+		return fmt.Errorf("invalid date '%s'", string(v))
+	}
+	y, _ := strconv.Atoi(ymd[0])
+	m, _ := strconv.Atoi(ymd[1])
+	dd, _ := strconv.Atoi(ymd[2])
+	if y <= 0 || m <= 0 || dd <= 0 {
+		return fmt.Errorf("invalid date '%s'", string(v))
+	}
+	//t := time.Date(y, time.Month(m), d, 0, 0, 0, 0, time.UTC)
+	*d = NullDate([3]int{y, m, dd})
+	return nil
+}
+
+// Value database/sql/
+func (d NullDate) Value() (driver.Value, error) {
+	if d.IsZero() {
+		return nil, nil
+	}
+	dd := [3]int(d)
+	return fmt.Sprintf("%04d-%02d-%02d", dd[0], dd[1], dd[2]), nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler
+func (d *NullDate) UnmarshalJSON(v []byte) error {
+	if v == nil {
+		return nil
+	}
+	if len(v) == 0 {
+		return nil
+	}
+	if string(v) == "null" {
+		return nil
+	}
+	if len(v) <= 2 {
+		return fmt.Errorf("invalid date '%s'", string(v))
+	}
+	str := string(v)
+	// remove quotes "0000-00-00"
+	return d.strscan(str[1 : len(str)-1])
+}
+
+// MarshalJSON implements json.Marshaler
+func (d *NullDate) MarshalJSON() ([]byte, error) {
+	nn := [3]int(*d)
+	return []byte(fmt.Sprintf("%04d-%02d-%02d", nn[0], nn[1], nn[2])), nil
+}
+
+// Year returns the year
+func (d NullDate) Year() int {
+	dd := [3]int(d)
+	return dd[0]
+}
+
+// Month returns the month
+func (d NullDate) Month() time.Month {
+	dd := [3]int(d)
+	return time.Month(dd[1])
+}
+
+// Day returns the day
+func (d NullDate) Day() int {
+	dd := [3]int(d)
+	return dd[2]
 }
