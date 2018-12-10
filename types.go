@@ -345,14 +345,27 @@ func (n NullFloat64) Value() (driver.Value, error) {
 //
 //
 
-type NullDate [3]int
+type NullDate string
+
+func (d NullDate) YMD() (year, month, day int) {
+	ds := strings.Split(string(d), "-")
+	if len(ds) != 3 {
+		return 0, 0, 0
+	}
+	year, _ = strconv.Atoi(ds[0])
+	month, _ = strconv.Atoi(ds[1])
+	day, _ = strconv.Atoi(ds[2])
+	return
+}
 
 func (d NullDate) T() time.Time {
-	return time.Date(d[0], time.Month(d[1]), d[2], 0, 0, 0, 0, time.UTC)
+	yy, mm, dd := d.YMD()
+	return time.Date(yy, time.Month(mm), dd, 0, 0, 0, 0, time.UTC)
 }
 
 func (d NullDate) IsZero() bool {
-	return d[0] == 0 || d[1] == 0 || d[2] == 0
+	yy, mm, dd := d.YMD()
+	return yy == 0 || mm == 0 || dd == 0
 }
 
 func (d *NullDate) Scan(value interface{}) error {
@@ -361,7 +374,7 @@ func (d *NullDate) Scan(value interface{}) error {
 	}
 	if v, ok := value.(time.Time); ok {
 		// v = v.UTC()
-		*d = NullDate([3]int{v.Year(), int(v.Month()), v.Day()})
+		*d = NullDate(v.Format("2006-01-02"))
 		return nil
 	}
 	switch v := value.(type) {
@@ -370,7 +383,7 @@ func (d *NullDate) Scan(value interface{}) error {
 	case string:
 		return d.strscan(v)
 	}
-	*d = NullDate([3]int{0, 0, 0})
+	*d = NullDate("0000-00-00")
 	return nil
 }
 
@@ -379,14 +392,7 @@ func (d *NullDate) strscan(v string) error {
 	if len(ymd) != 3 {
 		return fmt.Errorf("invalid date '%s'", string(v))
 	}
-	y, _ := strconv.Atoi(ymd[0])
-	m, _ := strconv.Atoi(ymd[1])
-	dd, _ := strconv.Atoi(ymd[2])
-	if y <= 0 || m <= 0 || dd <= 0 {
-		return fmt.Errorf("invalid date '%s'", string(v))
-	}
-	//t := time.Date(y, time.Month(m), d, 0, 0, 0, 0, time.UTC)
-	*d = NullDate([3]int{y, m, dd})
+	*d = NullDate(v)
 	return nil
 }
 
@@ -395,8 +401,8 @@ func (d NullDate) Value() (driver.Value, error) {
 	if d.IsZero() {
 		return nil, nil
 	}
-	dd := [3]int(d)
-	return fmt.Sprintf("%04d-%02d-%02d", dd[0], dd[1], dd[2]), nil
+	yy, mm, dd := d.YMD()
+	return fmt.Sprintf("%04d-%02d-%02d", yy, mm, dd), nil
 }
 
 // UnmarshalJSON implements json.Unmarshaler
@@ -420,24 +426,27 @@ func (d *NullDate) UnmarshalJSON(v []byte) error {
 
 // MarshalJSON implements json.Marshaler
 func (d *NullDate) MarshalJSON() ([]byte, error) {
-	nn := [3]int(*d)
-	return []byte(fmt.Sprintf("%04d-%02d-%02d", nn[0], nn[1], nn[2])), nil
+	var yy, mm, dd int
+	if d != nil {
+		yy, mm, dd = d.YMD()
+	}
+	return []byte("\"" + fmt.Sprintf("%04d-%02d-%02d", yy, mm, dd) + "\""), nil
 }
 
 // Year returns the year
 func (d NullDate) Year() int {
-	dd := [3]int(d)
-	return dd[0]
+	yy, _, _ := d.YMD()
+	return yy
 }
 
 // Month returns the month
 func (d NullDate) Month() time.Month {
-	dd := [3]int(d)
-	return time.Month(dd[1])
+	_, mm, _ := d.YMD()
+	return time.Month(mm)
 }
 
 // Day returns the day
 func (d NullDate) Day() int {
-	dd := [3]int(d)
-	return dd[2]
+	_, _, dd := d.YMD()
+	return dd
 }

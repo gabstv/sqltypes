@@ -23,7 +23,7 @@ func TestDecimal(t *testing.T) {
 }
 
 func TestNullDate(t *testing.T) {
-	dd := NullDate([3]int{2018, 3, 9})
+	dd := NullDate("2018-03-09")
 	assert.Equal(t, 2018, dd.Year())
 	//
 	ymdstr, err := dd.Value()
@@ -48,4 +48,18 @@ func TestNullDate(t *testing.T) {
 	assert.Equal(t, dd2.Year(), 2013)
 	assert.Equal(t, dd2.Month(), time.Month(9))
 	assert.Equal(t, dd2.Day(), 25)
+}
+
+func TestNullDateMarshal(t *testing.T) {
+	var dd NullDate
+	dd = NullDate("1987-03-09")
+	jj := make(map[string]interface{})
+	jj["date"] = dd
+	jj["a"] = "b"
+	jj["c"] = 1000
+	bb, err := json.Marshal(jj)
+	assert.NoError(t, err)
+	assert.NotNil(t, bb)
+	t.Log(string(bb))
+	assert.Equal(t, `{"a":"b","c":1000,"date":"1987-03-09"}`, string(bb))
 }
