@@ -93,3 +93,10 @@ func TestNullTimeMap(t *testing.T) {
 	z2 := &ntmap{}
 	assert.NoError(t, json.Unmarshal(zbytes, z2))
 }
+
+func TestNullTimeMapPtr(t *testing.T) {
+	xx := NullTime(time.Now())
+	zz := &xx
+	_, err := zz.MarshalJSON()
+	assert.NoError(t, err)
+}
