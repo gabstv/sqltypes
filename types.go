@@ -11,6 +11,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+// NullBool is a bool that can be NULL (from DB)
 type NullBool bool
 
 // Scan implements the Scanner interface.
@@ -239,12 +240,13 @@ func (n *NullTime) UnmarshalJSON(v []byte) error {
 	return nil
 }
 
-// implements json.Marshaler
-func (n *NullTime) MarshalJSON() ([]byte, error) {
+// MarshalJSON implements json.Marshaler
+func (n NullTime) MarshalJSON() ([]byte, error) {
 	t := n.T()
 	return t.MarshalJSON()
 }
 
+//
 type NullDecimal decimal.Decimal
 
 func (d NullDecimal) D() decimal.Decimal {
@@ -274,7 +276,7 @@ func (d NullDecimal) Value() (driver.Value, error) {
 	return v.Value()
 }
 
-// implements json.Unmarshaler
+// UnmarshalJSON implements json.Unmarshaler
 func (n *NullDecimal) UnmarshalJSON(v []byte) error {
 	if v == nil {
 		return nil
@@ -295,8 +297,8 @@ func (n *NullDecimal) UnmarshalJSON(v []byte) error {
 	return nil
 }
 
-// implements json.Marshaler
-func (n *NullDecimal) MarshalJSON() ([]byte, error) {
+// MarshalJSON implements json.Marshaler
+func (n NullDecimal) MarshalJSON() ([]byte, error) {
 	t := n.D()
 	return t.MarshalJSON()
 }

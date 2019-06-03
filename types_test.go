@@ -63,3 +63,33 @@ func TestNullDateMarshal(t *testing.T) {
 	t.Log(string(bb))
 	assert.Equal(t, `{"a":"b","c":1000,"date":"1987-03-09"}`, string(bb))
 }
+
+type ntmap struct {
+	Ts map[string]ntt
+}
+
+type ntt struct {
+	T NullTime
+	V string
+	N time.Time
+}
+
+func TestNullTimeMap(t *testing.T) {
+	z := ntmap{
+		Ts: map[string]ntt{
+			"a": ntt{
+				V: "a",
+				T: NullTime(time.Now()),
+				N: time.Now(),
+			},
+			"b": ntt{
+				V: "b",
+			},
+		},
+	}
+	zbytes, err := json.Marshal(&z)
+	assert.NoError(t, err)
+	t.Log(string(zbytes))
+	z2 := &ntmap{}
+	assert.NoError(t, json.Unmarshal(zbytes, z2))
+}
