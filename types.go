@@ -34,9 +34,9 @@ func (n *NullBool) Scan(value interface{}) error {
 // Value implements the driver Valuer interface.
 func (n NullBool) Value() (driver.Value, error) {
 	if n == false {
-		return 0, nil
+		return int64(0), nil
 	}
-	return 1, nil
+	return int64(1), nil
 }
 
 // NullInt0 is a normal int (0 = nil)
